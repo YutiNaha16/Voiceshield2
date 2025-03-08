@@ -1,0 +1,25 @@
+from fastapi import FastAPI, UploadFile, File
+import whisper
+import io
+import soundfile as sf
+
+app = FastAPI()
+
+# Load Whisper Model
+whisper_model = whisper.load_model("small")
+
+@app.post("/speech_to_text")
+async def speech_to_text(file: UploadFile = File(...)):
+    audio_data = await file.read()
+    audio_file = io.BytesIO(audio_data)
+    audio, sample_rate = sf.read(audio_file, dtype="float32")
+
+    # Transcribe audio
+    result = whisper_model.transcribe(audio)
+
+    return {"transcribed_text": result["text"]}
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="127.0.0.1", port=8000)
+
